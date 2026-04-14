@@ -2,18 +2,22 @@ import socket
 import threading
 from datetime import datetime
 
+
 HOST = "0.0.0.0"
 PORT = 5000
 
 clients = []
 nombres = []
 
+
+
 def broadcast(message):
-    for client in clients:
+    for client in clients[:]:
         try:
             client.send(message)
         except:
-            pass
+            clients.remove(client)
+            client.close()
 
 def handle_client(client):
     while True:
@@ -47,10 +51,17 @@ def receive_connections():
         print(f"Conectado con {address}")
 
         client.send("NOMBRE".encode("utf-8"))
-        nombre = client.recv(1024).decode("utf-8")
+
+        nombre_data = client.recv(1024)
+        if not nombre_data:
+         client.close()
+         continue
+
+        nombre = nombre_data.decode("utf-8")
 
         nombres.append(nombre)
         clients.append(client)
+
 
         print(f"Nombre del usuario: {nombre}")
         broadcast(f"{nombre} se unió al chat.".encode("utf-8"))
